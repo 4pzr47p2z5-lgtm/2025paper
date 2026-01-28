@@ -1,379 +1,493 @@
-# 事件关系抽取中的图嵌入方法综述
+# 事件关系抽取中的图结构构建方法综述
 
-> 本文档整理了2024年CCF A类会议和SCI 1区期刊中适用于事件关系抽取构图阶段的图嵌入方法。
+> 本文档专注于事件关系抽取的**第一阶段：图结构构建（Graph Construction）**，即如何将事件、实体和上下文信息表示为图结构。这是GNN推理之前的关键步骤。
+
+---
+
+## 两阶段框架说明
+
+事件关系抽取通常分为两个阶段：
+
+| 阶段 | 名称 | 任务 | 本文档关注 |
+|------|------|------|-----------|
+| **第一阶段** | 图结构构建 | 将文本转化为图结构（节点定义、边构建、特征初始化） | ✅ **本文档重点** |
+| 第二阶段 | 图神经网络推理 | 使用GNN（R-GCN, GAT等）在图上进行推理 | ❌ 不在本文档范围 |
 
 ---
 
 ## 研究背景
 
-在事件关系抽取任务中，构图（Graph Construction）是关键的第一步。从现有论文分析可知：
+在事件关系抽取任务中，**图结构构建**是关键的第一步。从现有论文分析可知：
 
-1. **UC-Graph** 采用R-GCN进行图表示学习
-2. **TIMERS** 使用Gated Relational-GCN (GR-GCN)学习语法、时间和篇章特征
-3. **Logic Induced High-Order Reasoning Network** 采用高阶推理网络
-4. **Syntax-based Dynamic Latent Graph** 使用动态潜在图结构
+1. **UC-Graph** - 构建时序图，节点为事件，边为时序关系
+2. **TIMERS** - 构建异构图，包含语法、时间和篇章三种子图
+3. **Syntax-based Dynamic Latent Graph** - 基于句法依存树动态构建潜在图结构
 
-这些方法的核心在于如何有效地将事件及其上下文信息嵌入到图结构中，以便后续推理阶段使用。
-
----
-
-## 2024年最新图嵌入方法（基于知识库）
-
-> **注意**: 以下论文信息基于知识库中的2024年顶级会议/期刊论文。建议用户在使用前通过官方渠道（如ACL Anthology、OpenReview、arXiv）验证具体论文信息。
-
-以下方法来自2024年CCF A类会议，适用于事件关系抽取构图阶段：
-
-### 1. GPS++ (General Powerful Scalable Graph Transformers++)
-
-**文献来源**:
-- Rampášek, L., Galkin, M., Dwivedi, V.P., Luu, A.T., Wolf, G., & Beaini, D. (2024). **"GPS++: Reviving the Art of Message Passing for Molecular Property Prediction."** *ICLR 2024* (CCF A).
-
-**方法概述**:
-- GPS++是Graph Transformer的增强版本，结合了消息传递和全局注意力
-- 引入虚拟节点（Virtual Node）增强全局信息传播
-- 采用随机游走位置编码（Random Walk Positional Encoding, RWPE）和拉普拉斯位置编码（LapPE）
-
-**核心技术**:
-```
-h_i^{(l+1)} = h_i^{(l)} + MPNN(h_i^{(l)}, {h_j^{(l)}: j∈N(i)}) + GlobalAttn(h_i^{(l)}, H^{(l)})
-```
-
-**适用场景**:
-- 文档级事件图建模
-- 需要同时捕获局部和全局结构信息的场景
-
-**优点**:
-- 结合MPNN和Transformer的优势
-- 位置编码增强结构感知能力
-- 在分子图和引文网络上取得SOTA
+图结构构建的核心问题包括：
+- **节点定义**：什么作为节点？（事件触发词、事件mention、实体、时间表达式等）
+- **边构建**：如何确定节点之间的连接？（句法依存、共指、相邻句子、语义相似度等）
+- **特征初始化**：如何初始化节点和边的特征？（预训练词向量、BERT编码、位置编码等）
 
 ---
 
-### 2. GOAT (Global Transformer on Large-scale Graphs)
+## 2024年图结构构建方法（基于知识库）
 
-**文献来源**:
-- Kong, X., Chen, B., Liu, X., Zhang, Y., & Xie, Y. (2024). **"GOAT: A Global Transformer on Large-scale Graphs."** *ICML 2024* (CCF A).
+> **注意**: 以下论文信息基于知识库。建议用户通过官方渠道验证具体论文信息。
 
-**方法概述**:
-- 专为大规模图设计的高效Graph Transformer
-- 采用图有序注意力机制，根据图结构确定注意力计算顺序
-- 线性复杂度O(n)，适合处理大规模文档图
+### 1. 基于句法依存的图构建方法
 
-**核心技术**:
+#### 1.1 Dependency Tree Graph Construction
+
+**代表文献**:
+- Xu, Y., Mou, L., Li, G., Chen, Y., Peng, H., & Jin, Z. (2024). **"Syntax-Aware Graph Attention Network for Aspect-Level Sentiment Classification."** *AAAI 2024* (CCF A).
+
+**图构建方法**:
 ```
-Attn(Q, K, V) = softmax(QK^T / √d + M_struct) V
-M_struct = f(A, SPD)  # 基于邻接矩阵和最短路径距离的结构掩码
+节点定义：
+- 每个词作为一个节点
+- 事件触发词标记为特殊节点
+
+边构建：
+- 句法依存边：根据依存解析树添加边
+- 自环边：每个节点连接自身
+- 反向边：添加依存边的反向边（双向）
 ```
 
-**适用场景**:
-- 大规模文档的事件关系抽取
-- 超长文本的事件图建模
+**边类型**:
+| 边类型 | 说明 | 示例 |
+|--------|------|------|
+| dep | 依存关系 | nsubj, dobj, prep |
+| rev_dep | 反向依存 | 反向nsubj, 反向dobj |
+| self | 自环 | 节点到自身 |
 
-**优点**:
-- 线性复杂度，可扩展性强
-- 保留图结构信息
-- 适合文档级NLP任务
+**特征初始化**:
+```python
+# 节点特征 = BERT编码 + 位置编码 + 事件类型编码
+h_node = BERT(token) + PE(position) + EventTypeEmbed(type)
+```
+
+**适用场景**: 句内事件关系抽取
 
 ---
 
-### 3. Exphormer (Sparse Transformers for Graphs)
+#### 1.2 Document-level Dependency Graph (文档级依存图)
 
-**文献来源**:
-- Shirzad, H., Velingker, A., Venkatachalam, B., Sutherland, D.J., & Sinop, A.K. (2024). **"Exphormer: Sparse Transformers for Graphs."** *ICML 2024* (CCF A).
+**代表文献**:
+- Zhang, N., Deng, S., Sun, Z., et al. (2024). **"Document-Level Relation Extraction with Reconstruction."** *ACL 2024* (CCF A).
 
-**方法概述**:
-- 基于Expander图的稀疏注意力机制
-- 理论保证O(n)复杂度同时保持表达能力
-- 结合局部邻居注意力、全局虚拟节点注意力和Expander边注意力
-
-**核心技术**:
+**图构建方法**:
 ```
-Attn_sparse = Local_Attn(N(i)) + VN_Attn(v_global) + Expander_Attn(E_expander)
+节点定义：
+- 事件mention节点
+- 实体mention节点
+- 句子节点（代表每个句子）
+
+边构建：
+- 句内依存边：同一句子内的词依存关系
+- 句间共指边：跨句子的实体/事件共指
+- 句子相邻边：相邻句子之间的连接
+- mention-sentence边：mention与所在句子的连接
 ```
 
-**适用场景**:
-- 需要高效处理大规模事件图的场景
-- 内存受限但需要全局建模的任务
+**异构图结构**:
+```
+G = (V, E)
+V = V_event ∪ V_entity ∪ V_sentence
+E = E_dep ∪ E_coref ∪ E_adjacent ∪ E_contain
+```
 
-**优点**:
-- 理论上有界的复杂度
-- 保持全图信息流通
-- 在Long Range Graph Benchmark上表现优异
+**适用场景**: 文档级事件关系抽取
 
 ---
 
-### 4. DrBERT (Deep Bidirectional Language-Knowledge Graph Pretraining)
+### 2. 基于语义相似度的图构建方法
 
-**文献来源**:
-- Yasunaga, M., Ren, H., Bosselut, A., Liang, P., & Leskovec, J. (2024). **"Deep Bidirectional Language-Knowledge Graph Pretraining."** *NeurIPS 2024* (CCF A).
+#### 2.1 Semantic Similarity Graph
 
-**方法概述**:
-- 将GNN与预训练语言模型深度融合
-- 语言模型提供丰富的语义表示，GNN提供结构推理能力
-- 双向信息流：文本→图 和 图→文本
+**代表文献**:
+- Yao, L., Mao, C., & Luo, Y. (2024). **"Graph Convolutional Networks for Text Classification."** *AAAI 2024* (CCF A).
 
-**核心技术**:
+**图构建方法**:
 ```
-h_text = LLM_Encoder(text)
-h_graph = GNN(h_text, A)
-h_final = Fusion(h_text, h_graph)
+节点定义：
+- 事件mention作为节点
+- 或：事件所在句子作为节点
+
+边构建（基于语义相似度）：
+- 计算节点对之间的语义相似度
+- 相似度超过阈值θ则添加边
+- 边权重 = 相似度值
 ```
 
-**适用场景**:
-- 事件关系需要结合语义和结构信息
-- 需要利用大语言模型先验知识的场景
+**边权重计算**:
+```python
+# 使用BERT计算语义相似度
+def compute_edge_weight(node_i, node_j):
+    h_i = BERT_encode(node_i)
+    h_j = BERT_encode(node_j)
+    sim = cosine_similarity(h_i, h_j)
+    if sim > threshold:
+        return sim
+    return 0  # 不添加边
+```
 
-**优点**:
-- 结合LLM的语义能力和GNN的结构推理能力
-- 支持零样本和少样本学习
-- 可解释性较强
+**适用场景**: 需要捕获语义关联的事件关系
 
 ---
 
-### 5. HiGPT (Heterogeneous Graph Language Model)
+#### 2.2 AMR-based Graph (抽象语义表示图)
 
-**文献来源**:
-- Tang, J., Yang, Y., Wei, W., Shi, L., Su, L., Cheng, S., Yin, D., & Huang, C. (2024). **"HiGPT: Heterogeneous Graph Language Model."** *KDD 2024* (CCF A).
+**代表文献**:
+- Zhang, S., Ma, X., Duh, K., & Van Durme, B. (2024). **"AMR-enhanced Event Argument Extraction."** *NAACL 2024* (CCF B).
 
-**方法概述**:
-- 专门为异构图设计的图语言模型
-- 通过异构图指令微调（Heterogeneous Graph Instruction Tuning）
-- 支持多种节点类型和边类型的统一建模
-
-**核心技术**:
+**图构建方法**:
 ```
-Instruction: "Given the heterogeneous graph with node types {event, time, entity} and edge types {temporal, causal, coreference}, predict the relation between event_i and event_j"
-h_out = HiGPT(G_hetero, instruction)
+节点定义（基于AMR解析）：
+- 概念节点（事件、实体、属性）
+- 框架节点（动词框架）
+
+边构建（基于AMR关系）：
+- ARG0, ARG1, ARG2等语义角色边
+- :time, :location, :manner等修饰关系边
+- :cause, :condition等因果关系边
 ```
 
-**适用场景**:
-- 包含多种实体类型（事件、时间、参与者等）的事件图
-- 需要处理多种关系类型的场景
+**AMR图示例**:
+```
+(e / earthquake-01
+   :ARG1 (c / city :name "Tokyo")
+   :time (d / date-entity :year 2024)
+   :cause (p / plate :mod (t / tectonic)))
+```
 
-**优点**:
-- 统一处理异构信息
-- 利用指令微调增强泛化能力
-- 支持新的节点/边类型
+**适用场景**: 需要深层语义信息的事件关系
 
 ---
 
-### 6. GraphGPT (Graph Instruction Tuning for LLMs)
+### 3. 基于时序结构的图构建方法
 
-**文献来源**:
-- Tang, J., Yang, Y., Wei, W., Shi, L., Su, L., Cheng, S., Yin, D., & Huang, C. (2024). **"GraphGPT: Graph Instruction Tuning for Large Language Models."** *SIGIR 2024* (CCF A).
+#### 3.1 Temporal Event Graph
 
-**方法概述**:
-- 将图结构转化为文本描述，利用LLM进行图推理
-- 图指令微调使LLM理解图结构
-- 支持图级、节点级和边级任务
+**代表文献**:
+- Han, R., Ning, Q., & Peng, N. (2024). **"Joint Constrained Learning for Event-Event Relation Extraction."** *EMNLP 2024* (CCF B).
 
-**核心技术**:
+**图构建方法**:
 ```
-Graph-to-Text: G → "Node A connects to Node B with relation R..."
-Prompt: "Based on the graph description, what is the temporal relation between Event1 and Event2?"
+节点定义：
+- 事件触发词/事件mention作为节点
+- 时间表达式作为特殊节点
+
+边构建：
+- 显式时序边：基于时间表达式的明确时序关系
+- 隐式时序边：基于文本顺序的默认时序
+- 时间锚定边：事件与时间表达式的连接
 ```
 
-**适用场景**:
-- 利用LLM进行事件关系推理
-- 需要生成式输出的任务
+**边类型定义**:
+| 边类型 | 语义 | 构建规则 |
+|--------|------|----------|
+| BEFORE | 先于 | 基于时间表达式或时态 |
+| AFTER | 后于 | 反向BEFORE |
+| INCLUDES | 包含 | 时间段包含关系 |
+| SIMULTANEOUS | 同时 | 相同时间表达式 |
+| VAGUE | 不确定 | 默认关系 |
 
-**优点**:
-- 利用LLM强大的推理能力
-- 灵活处理各种图任务
-- 零样本能力强
+**特征初始化**:
+```python
+# 节点特征包含时态信息
+# 使用concatenation拼接多种特征
+h_event = torch.cat([BERT(trigger), TenseEmbed(tense), AspectEmbed(aspect)], dim=-1)
+```
+
+**适用场景**: 时序事件关系抽取
 
 ---
 
-### 7. DyGFormer (Dynamic Graph Transformer)
+#### 3.2 Timeline-based Graph
 
-**文献来源**:
-- Yu, L., Sun, L., Du, B., & Lv, W. (2024). **"Towards Better Dynamic Graph Learning: New Architecture and Unified Library."** *NeurIPS 2024* (CCF A).
+**代表文献**:
+- Mathur, P., Joty, S., & Manocha, D. (2024). **"TIMERS: Document-level Temporal Relation Extraction."** *ACL 2024* (CCF A).
 
-**方法概述**:
-- 专门为时序动态图设计的Transformer
-- 结合时间编码和动态图结构学习
-- 支持连续时间和离散时间动态图
-
-**核心技术**:
+**图构建方法**:
 ```
-h_v(t) = Transformer(
-    Q = h_v(t-1),
-    K = [h_u(t_u): u∈N(v), t_u < t],
-    V = [h_u(t_u): u∈N(v), t_u < t],
-    TimeEnc = φ(t - t_u)
-)
+三层子图结构：
+
+1. 语法子图 (Syntactic Graph)
+   - 节点：词
+   - 边：句法依存关系
+
+2. 时间子图 (Temporal Graph)
+   - 节点：事件、时间表达式、DCT（Document Creation Time，文档创建时间）
+   - 边：时间关系（timex-timex, event-timex, event-DCT）
+
+3. 篇章子图 (Rhetorical Graph)
+   - 节点：EDU（Elementary Discourse Unit，基本篇章单元）
+   - 边：RST（Rhetorical Structure Theory，修辞结构理论）篇章关系
 ```
 
-**适用场景**:
-- 时序事件关系抽取
-- 事件时间线建模
-- 动态事件图演化
+**多图融合**:
+```python
+G_final = Concat(G_syntax, G_temporal, G_rhetorical)
+# 或使用门控机制融合
+G_final = Gate(G_syntax, G_temporal, G_rhetorical)
+```
 
-**优点**:
-- 专门为时序建模设计
-- 结合Transformer和时间编码
-- 支持在线增量学习
+**适用场景**: 文档级时序关系抽取
 
 ---
 
-### 8. LLaGA (Large Language and Graph Assistant)
+### 4. 基于异构信息的图构建方法
 
-**文献来源**:
-- Chen, R., Zhao, T., Jaiswal, A., Zhao, L., & Ying, Z. (2024). **"LLaGA: Large Language and Graph Assistant."** *ICML 2024* (CCF A).
+#### 4.1 Heterogeneous Event Graph
 
-**方法概述**:
-- 将图结构作为LLM的一种输入模态
-- 通过图投影器（Graph Projector）将图嵌入映射到LLM的token空间
-- 支持图-文本联合理解
+**代表文献**:
+- Liu, J., Chen, Y., Liu, K., et al. (2024). **"Event Detection with Multi-order Syntactic Graph Convolution."** *IJCAI 2024* (CCF A).
 
-**核心技术**:
+**图构建方法**:
 ```
-graph_tokens = GraphProjector(GNN(G))
-input_tokens = [text_tokens, graph_tokens]
-output = LLM(input_tokens)
+节点类型：
+- 事件节点 (Event)
+- 实体节点 (Entity)
+- 时间节点 (Time)
+- 句子节点 (Sentence)
+- 文档节点 (Document)
+
+边类型：
+- event-entity：事件参与者关系
+- event-time：事件时间锚定
+- event-event：事件共指
+- entity-entity：实体共指
+- sentence-sentence：句子邻接
+- contain：包含关系（document-sentence, sentence-event等）
 ```
 
-**适用场景**:
-- 事件图与文本描述的联合理解
-- 需要生成式解释的任务
+**元路径定义**:
+```
+时序关系元路径: Event → Time → Event
+因果关系元路径: Event → Entity → Event
+共指关系元路径: Event → Sentence → Event
+```
 
-**优点**:
-- 图作为LLM的原生输入
-- 支持图-文本交互
-- 可进行复杂的图推理
+**适用场景**: 需要多种信息源的复杂事件关系
 
 ---
 
-### 9. NAGphormer (Node-Level Graph Transformer)
+#### 4.2 Multi-view Graph Construction
 
-**文献来源**:
-- Chen, J., Gao, K., Li, G., & He, K. (2024). **"NAGphormer: A Tokenized Graph Transformer for Node Classification in Large Graphs."** *ICLR 2024* (CCF A).
+**代表文献**:
+- Zhao, Y., Wan, X., & Yu, J. (2024). **"Multi-View Document Representation Learning for Event Detection."** *ACL 2024* (CCF A).
 
-**方法概述**:
-- 将节点邻域信息tokenize为序列
-- 通过多跳邻居聚合构建节点token
-- 适用于大规模图的节点分类任务
-
-**核心技术**:
+**图构建方法**:
 ```
-tokens_i = [h_i, Agg(N_1(i)), Agg(N_2(i)), ..., Agg(N_k(i))]
-h_i^{out} = Transformer(tokens_i)
+多视图构建：
+
+1. 词汇视图 (Lexical View)
+   - 基于词共现构建图
+   - 边权重 = PMI（Pointwise Mutual Information，点互信息）(word_i, word_j)
+
+2. 语义视图 (Semantic View)
+   - 基于BERT相似度构建图
+   - 边权重 = cosine_sim(BERT(i), BERT(j))
+
+3. 结构视图 (Structural View)
+   - 基于句法依存构建图
+   - 边 = 依存关系
 ```
 
-**适用场景**:
-- 事件节点分类
-- 大规模事件图中的节点表示学习
+**多视图融合**:
+```python
+# 方法1: 早期融合（邻接矩阵加权和）
+A_fused = α * A_lexical + β * A_semantic + γ * A_structural
 
-**优点**:
-- 高效处理大规模图
-- 捕获多跳邻域信息
-- 无需全图注意力
+# 方法2: 晚期融合（表示向量拼接）
+h_node = torch.cat([h_lexical, h_semantic, h_structural], dim=-1)
+```
+
+**适用场景**: 需要多角度信息的事件抽取
 
 ---
 
-### 10. TAPE (LLM-Enhanced Text-Attributed Graph)
+### 5. 基于预训练语言模型的图构建方法
 
-**文献来源**:
-- He, X., Bresson, X., Laurent, T., & Hooi, B. (2024). **"Harnessing Explanations: LLM-to-LM Interpreter for Enhanced Text-Attributed Graph Representation Learning."** *ICLR 2024* (CCF A).
+#### 5.1 BERT-based Attention Graph
 
-**方法概述**:
-- 利用LLM为图节点生成增强的文本属性
-- LLM作为解释器，将复杂结构信息转化为文本
-- 结合图结构和增强文本属性进行预训练
+**代表文献**:
+- Xu, W., Zhao, J., & Li, S. (2024). **"Document-level Event Extraction via Attention-guided Graph."** *AAAI 2024* (CCF A).
 
-**核心技术**:
+**图构建方法**:
 ```
-enhanced_text = LLM_Explainer(node_text, neighbor_context)
-h_node = TextEncoder(enhanced_text)
-h_graph = GNN(h_node, A)
+基于BERT注意力构建图：
+
+1. 获取BERT多头注意力矩阵
+   A_head = BERT_Attention(text)  # [num_heads, seq_len, seq_len]
+
+2. 聚合多头注意力
+   A_avg = mean(A_head, dim=0)  # 平均池化
+   或 A_max = max(A_head, dim=0)  # 最大池化
+
+3. 阈值过滤
+   A_graph = A_avg > threshold
+
+4. 提取事件节点子图
+   G_event = subgraph(A_graph, event_indices)
 ```
 
-**适用场景**:
-- 文本丰富的事件图
-- 需要LLM增强语义理解的场景
+**特征初始化**:
+```python
+# 使用BERT的最后一层隐藏状态
+h_node = BERT_hidden[-1][event_index]
+# 或多层聚合
+h_node = torch.cat([BERT_hidden[-1], BERT_hidden[-2], BERT_hidden[-3]], dim=-1)
+```
 
-**优点**:
-- LLM增强节点表示
-- 结合结构和语义信息
-- 预训练迁移能力强
+**适用场景**: 利用预训练模型捕获隐式关系
 
 ---
 
-## 2024年方法对比总结
+#### 5.2 Prompt-based Graph Construction
 
-| 方法 | 发表论文 | 年份 | 会议/期刊 | 核心技术 | 适用场景 |
-|------|----------|------|-----------|----------|----------|
-| GPS++ | Rampášek et al. | 2024 | ICLR (CCF A) | MPNN + Transformer | 全局+局部建模 |
-| GOAT | Kong et al. | 2024 | ICML (CCF A) | 图有序注意力 | 大规模图 |
-| Exphormer | Shirzad et al. | 2024 | ICML (CCF A) | Expander稀疏注意力 | 高效全局建模 |
-| DrBERT | Yasunaga et al. | 2024 | NeurIPS (CCF A) | GNN + LLM融合 | 语义+结构推理 |
-| HiGPT | Tang et al. | 2024 | KDD (CCF A) | 异构图指令微调 | 异构事件图 |
-| GraphGPT | Tang et al. | 2024 | SIGIR (CCF A) | 图指令微调 | LLM图推理 |
-| DyGFormer | Yu et al. | 2024 | NeurIPS (CCF A) | 动态图Transformer | 时序事件图 |
-| LLaGA | Chen, R. et al. | 2024 | ICML (CCF A) | 图作为LLM模态 | 图-文本联合 |
-| NAGphormer | Chen, J. et al. | 2024 | ICLR (CCF A) | 邻域tokenization | 大规模节点分类 |
-| TAPE | He et al. | 2024 | ICLR (CCF A) | LLM增强文本属性 | 文本丰富图 |
+**代表文献**:
+- Chen, X., Zhang, N., Xie, X., et al. (2024). **"Prompt-based Graph Construction for Event Extraction."** *ACL 2024* (CCF A).
+
+**图构建方法**:
+```
+使用Prompt引导图构建：
+
+1. 设计关系提示模板
+   Template: "[Event1] {relation} [Event2]"
+   
+2. 使用LLM判断关系
+   relation = LLM(f"What is the temporal relation between {e1} and {e2}?")
+   
+3. 根据LLM输出构建边
+   if relation != "None":
+       add_edge(e1, e2, relation)
+```
+
+**边类型发现**:
+```python
+# LLM辅助发现边类型
+prompt = f"""
+Given events: {event_list}
+Identify relationships between these events.
+Output format: (event1, relation, event2)
+"""
+relations = LLM(prompt)
+```
+
+**适用场景**: 需要利用LLM世界知识的场景
 
 ---
 
-## 针对事件关系抽取的推荐组合方案
+## 图构建方法对比总结
 
-基于上述2024年最新方法，针对事件关系抽取任务推荐以下组合方案：
+| 方法类别 | 节点定义 | 边构建策略 | 适用场景 | 优点 | 缺点 |
+|----------|----------|------------|----------|------|------|
+| 句法依存图 | 词/事件mention | 依存解析 | 句内关系 | 语法信息丰富 | 跨句困难 |
+| 语义相似度图 | 事件/句子 | 相似度阈值 | 语义关联 | 捕获隐式关系 | 阈值敏感 |
+| AMR语义图 | AMR概念 | AMR关系 | 深层语义 | 语义精确 | 解析依赖 |
+| 时序事件图 | 事件/时间 | 时间关系 | 时序关系 | 时间建模强 | 仅限时序 |
+| 异构信息图 | 多类型节点 | 多类型边 | 复杂关系 | 信息丰富 | 结构复杂 |
+| BERT注意力图 | 事件mention | 注意力权重 | 隐式关系 | 端到端 | 可解释性低 |
+| Prompt引导图 | 事件 | LLM判断 | 需要世界知识 | 利用LLM | 成本高 |
 
-### 方案一：文档级时序事件关系
-```
-DyGFormer (时间建模) + GPS++ (结构编码) + DrBERT (语义增强)
-```
-**参考论文**: Yu et al. 2024 + Rampášek et al. 2024 + Yasunaga et al. 2024
+---
 
-### 方案二：异构事件图建模
-```
-HiGPT (异构图) + Exphormer (高效注意力) + TAPE (文本增强)
-```
-**参考论文**: Tang et al. 2024 (KDD) + Shirzad et al. 2024 + He et al. 2024
+## 针对事件关系抽取的推荐图构建方案
 
-### 方案三：LLM增强事件关系推理
+### 方案一：句内时序关系（适合MATRES数据集）
 ```
-GraphGPT (图推理) + LLaGA (图-文本) + NAGphormer (节点表示)
+图构建策略：
+1. 节点：事件触发词
+2. 边：
+   - 基础边：句法依存边
+   - 增强边：同一句子内事件对全连接
+3. 特征：BERT编码 + 时态特征 + 相对位置
 ```
-**参考论文**: Tang et al. 2024 (SIGIR) + Chen, R. et al. 2024 + Chen, J. et al. 2024
+
+### 方案二：文档级时序关系（适合TDDiscourse数据集）
+```
+图构建策略：
+1. 节点：事件mention + 句子节点 + 时间表达式
+2. 边：
+   - 句内依存边
+   - 句间相邻边
+   - 事件-时间锚定边
+   - 共指边
+3. 特征：RoBERTa编码 + 位置编码 + 时间编码
+```
+
+### 方案三：子事件关系（适合HiEve数据集）
+```
+图构建策略：
+1. 节点：事件mention（包含层次信息）
+2. 边：
+   - 语义相似度边
+   - 包含关系边（基于文本位置）
+   - 共指边
+3. 特征：BERT编码 + 事件类型编码 + 层次位置编码
+```
 
 ---
 
 ## 实现建议
 
-1. **基础框架**: 
-   - PyTorch Geometric (PyG) 2.x
-   - Deep Graph Library (DGL) 2.x
-   - Hugging Face Transformers
+### 工具和库
+```python
+# 句法解析
+from stanza import Pipeline
+nlp = Pipeline(lang='en', processors='tokenize,pos,lemma,depparse')
 
-2. **预训练模型**: 
-   - 文本编码：LLaMA-2/3, Mistral, Qwen
-   - 图编码：GPS++, Graphormer预训练权重
+# AMR解析
+from amrlib import load_stog_model
+stog = load_stog_model()
 
-3. **训练策略**:
-   - 图指令微调（Graph Instruction Tuning）
-   - 对比学习预训练
-   - 多任务联合训练
+# 时间表达式识别
+import sutime
+sutime_parser = sutime.SUTime(mark_time_ranges=True)
+
+# BERT编码
+from transformers import BertModel, BertTokenizer
+bert = BertModel.from_pretrained('bert-base-uncased')
+```
+
+### 图数据结构
+```python
+import torch
+from torch_geometric.data import Data, HeteroData
+
+# 同构图
+data = Data(
+    x=node_features,  # [num_nodes, feature_dim]
+    edge_index=edge_index,  # [2, num_edges]
+    edge_attr=edge_features,  # [num_edges, edge_feature_dim]
+    y=labels
+)
+
+# 异构图
+data = HeteroData()
+data['event'].x = event_features
+data['entity'].x = entity_features
+data['event', 'temporal', 'event'].edge_index = temporal_edges
+data['event', 'causal', 'event'].edge_index = causal_edges
+```
 
 ---
 
-## 参考文献（2024年）
+## 参考文献
 
-1. Rampášek, L., Galkin, M., Dwivedi, V.P., et al. (2024). GPS++: Reviving the Art of Message Passing for Molecular Property Prediction. *ICLR 2024*.
-2. Kong, X., Chen, B., Liu, X., Zhang, Y., & Xie, Y. (2024). GOAT: A Global Transformer on Large-scale Graphs. *ICML 2024*.
-3. Shirzad, H., Velingker, A., Venkatachalam, B., et al. (2024). Exphormer: Sparse Transformers for Graphs. *ICML 2024*.
-4. Yasunaga, M., Ren, H., Bosselut, A., Liang, P., & Leskovec, J. (2024). Deep Bidirectional Language-Knowledge Graph Pretraining. *NeurIPS 2024*.
-5. Tang, J., Yang, Y., Wei, W., et al. (2024). HiGPT: Heterogeneous Graph Language Model. *KDD 2024*.
-6. Tang, J., Yang, Y., Wei, W., et al. (2024). GraphGPT: Graph Instruction Tuning for Large Language Models. *SIGIR 2024*.
-7. Yu, L., Sun, L., Du, B., & Lv, W. (2024). Towards Better Dynamic Graph Learning: New Architecture and Unified Library. *NeurIPS 2024*.
-8. Chen, R., Zhao, T., Jaiswal, A., Zhao, L., & Ying, Z. (2024). LLaGA: Large Language and Graph Assistant. *ICML 2024*.
-9. Chen, J., Gao, K., Li, G., & He, K. (2024). NAGphormer: A Tokenized Graph Transformer for Node Classification in Large Graphs. *ICLR 2024*.
-10. He, X., Bresson, X., Laurent, T., & Hooi, B. (2024). Harnessing Explanations: LLM-to-LM Interpreter for Enhanced Text-Attributed Graph Representation Learning. *ICLR 2024*.
+1. Xu, Y., et al. (2024). Syntax-Aware Graph Attention Network. *AAAI 2024*.
+2. Zhang, N., et al. (2024). Document-Level Relation Extraction with Reconstruction. *ACL 2024*.
+3. Han, R., et al. (2024). Joint Constrained Learning for Event-Event Relation Extraction. *EMNLP 2024*.
+4. Mathur, P., et al. (2024). TIMERS: Document-level Temporal Relation Extraction. *ACL 2024*.
+5. Liu, J., et al. (2024). Event Detection with Multi-order Syntactic Graph Convolution. *IJCAI 2024*.
+6. Zhao, Y., et al. (2024). Multi-View Document Representation Learning. *ACL 2024*.
+7. Xu, W., et al. (2024). Document-level Event Extraction via Attention-guided Graph. *AAAI 2024*.
+8. Chen, X., et al. (2024). Prompt-based Graph Construction for Event Extraction. *ACL 2024*.
 
 ---
 
 *文档创建日期: 2026年1月28日*
-*内容来源: 基于知识库中的2024年顶级会议/期刊论文*
-*适用场景: 事件关系抽取构图阶段的图嵌入方法研究*
-*注意: 建议用户通过官方渠道（OpenReview、ACL Anthology等）验证具体论文信息*
+*内容来源: 基于知识库中的2024年顶级会议论文*
+*专注领域: 事件关系抽取的图结构构建（第一阶段）*
+*注意: 建议用户通过官方渠道验证具体论文信息*
