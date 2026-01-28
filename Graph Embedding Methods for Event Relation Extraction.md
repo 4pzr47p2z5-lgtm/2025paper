@@ -1,6 +1,20 @@
 # 事件关系抽取中的图嵌入方法综述
 
-> **说明**: 本文档基于近年来图神经网络领域的研究成果，结合事件关系抽取任务的特点，整理了适用于构图阶段的先进嵌入方法。所有引用的论文均来自CCF A/B类会议或SCI 1区期刊，包含真实的文献来源和发表年份。
+> ⚠️ **重要说明**: 
+> 
+> **用户要求检索2025-2026年CCF A/B、SCI 1区论文中的最新图嵌入方法，但由于技术限制，我无法访问学术数据库（如arXiv、Google Scholar、ACL Anthology、OpenReview、IEEE Xplore、ACM Digital Library、DBLP等网站均被环境阻止）。**
+> 
+> **建议用户通过以下渠道自行检索最新论文：**
+> 1. **arXiv.org** - 搜索 "graph embedding" / "graph neural network" / "graph transformer" 筛选最新年份
+> 2. **Google Scholar** - 搜索 `graph embedding (site:neurips.cc OR site:icml.cc) 2025`
+> 3. **OpenReview.net** - 查看NeurIPS 2024/2025, ICLR 2024/2025, ICML 2024/2025会议论文
+> 4. **ACL Anthology** - 搜索ACL/EMNLP/NAACL 2024-2025的图嵌入相关论文
+> 5. **IEEE Xplore / ACM DL** - 搜索TPAMI, TKDE等SCI 1区期刊最新图嵌入论文
+> 6. **Semantic Scholar** - 按年份和引用筛选最新高影响力论文
+> 
+> **注：2026年目前仅为1月底，大部分2026年顶会论文尚未发表，建议重点关注2024-2025年的最新成果。**
+
+---
 
 ## 研究背景
 
@@ -15,15 +29,41 @@
 
 ---
 
-## 推荐的图嵌入方法（基于CCF A/B、SCI 1区论文）
+## 最新论文检索建议
 
-以下方法均来自图神经网络和NLP领域的顶级会议/期刊，适用于事件关系抽取构图阶段：
+### 推荐检索关键词（用于自行检索）
 
-### 1. Graph Transformer (Graphormer)
+**英文关键词**:
+- "graph embedding" + "event extraction/relation"
+- "graph neural network" + "temporal relation"
+- "graph transformer" + "document-level"
+- "heterogeneous graph" + "NLP"
+- "knowledge graph embedding" + "event"
+- "dynamic graph" + "temporal"
+- "hyperbolic graph" + "hierarchical"
+- "contrastive graph learning"
 
-**核心文献**:
-- Ying, C., Cai, T., Luo, S., Zheng, S., Ke, G., He, D., Shen, Y., & Liu, T.Y. (2021). **"Do Transformers Really Perform Bad for Graph Representation?"** *NeurIPS 2021* (CCF A). 
-- Rampášek, L., Galkin, M., Dwivedi, V.P., Luu, A.T., Wolf, G., & Beaini, D. (2022). **"Recipe for a General, Powerful, Scalable Graph Transformer."** *NeurIPS 2022* (CCF A).
+**推荐检索的会议/期刊（CCF A/B, SCI 1区）**:
+
+| 类别 | 来源 | CCF等级/SCI分区 |
+|------|------|----------------|
+| NLP | ACL, EMNLP, NAACL | CCF A/B |
+| ML | NeurIPS, ICML, ICLR | CCF A |
+| AI | AAAI, IJCAI | CCF A |
+| Data Mining | KDD, WWW, SIGIR | CCF A |
+| 期刊 | TPAMI, TKDE, JMLR, TACL | SCI 1区/CCF A |
+
+---
+
+## 历史参考方法（2018-2022年，仅供参考学习）
+
+> 以下方法来自2018-2022年的论文，**不是**用户要求的最新方法，仅作为了解图嵌入技术发展的参考。用户应根据上述建议自行检索2024-2025年及更新的论文。
+
+### 1. Graph Transformer (Graphormer) - 2021-2022
+
+**历史文献**:
+- Ying, C., et al. (2021). **"Do Transformers Really Perform Bad for Graph Representation?"** *NeurIPS 2021* (CCF A). 
+- Rampášek, L., et al. (2022). **"Recipe for a General, Powerful, Scalable Graph Transformer."** *NeurIPS 2022* (CCF A).
 
 **方法概述**:
 - 结合Transformer架构与图结构编码
@@ -47,12 +87,12 @@ A(h_i, h_j) = (h_i W_Q)(h_j W_K)^T / √d + b_φ(v_i, v_j) + c_ij
 
 ---
 
-### 2. Heterogeneous Graph Attention Network (HAN)
+### 2. Heterogeneous Graph Attention Network (HAN) - 2019-2021
 
-**核心文献**:
-- Wang, X., Ji, H., Shi, C., Wang, B., Ye, Y., Cui, P., & Yu, P.S. (2019). **"Heterogeneous Graph Attention Network."** *WWW 2019* (CCF A).
+**历史文献**:
+- Wang, X., Ji, H., Shi, C., et al. (2019). **"Heterogeneous Graph Attention Network."** *WWW 2019* (CCF A).
 - Hu, Z., Dong, Y., Wang, K., & Sun, Y. (2020). **"Heterogeneous Graph Transformer."** *WWW 2020* (CCF A).
-- Lv, Q., Ding, M., Liu, Q., Chen, Y., Feng, W., He, S., Zhou, C., Jiang, J., Dong, Y., & Tang, J. (2021). **"Are We Really Making Much Progress? Revisiting, Benchmarking and Refining Heterogeneous Graph Neural Networks."** *KDD 2021* (CCF A).
+- Lv, Q., et al. (2021). **"Are We Really Making Much Progress? Revisiting, Benchmarking and Refining Heterogeneous Graph Neural Networks."** *KDD 2021* (CCF A).
 
 **方法概述**:
 - 针对异构图设计的分层注意力网络
@@ -78,12 +118,12 @@ z_i = Σ_Φ β_Φ · z_i^Φ
 
 ---
 
-### 3. Temporal Graph Network (TGN)
+### 3. Temporal Graph Network (TGN) - 2020
 
-**核心文献**:
-- Rossi, E., Chamberlain, B., Frasca, F., Eynard, D., Monti, F., & Bronstein, M. (2020). **"Temporal Graph Networks for Deep Learning on Dynamic Graphs."** *ICML 2020 Workshop on Graph Representation Learning*.
-- Xu, D., Ruan, C., Korpeoglu, E., Kumar, S., & Achan, K. (2020). **"Inductive Representation Learning on Temporal Graphs."** *ICLR 2020* (CCF A).
-- Kazemi, S.M., Goel, R., Jain, K., Kobyzev, I., Setber, A., Forsyth, P., & Poupart, P. (2020). **"Representation Learning for Dynamic Graphs: A Survey."** *JMLR 2020* (SCI 1区).
+**历史文献**:
+- Rossi, E., et al. (2020). **"Temporal Graph Networks for Deep Learning on Dynamic Graphs."** *ICML 2020 Workshop*.
+- Xu, D., et al. (2020). **"Inductive Representation Learning on Temporal Graphs."** *ICLR 2020* (CCF A).
+- Kazemi, S.M., et al. (2020). **"Representation Learning for Dynamic Graphs: A Survey."** *JMLR 2020* (SCI 1区).
 
 **方法概述**:
 - 专门为时序图设计的通用框架
@@ -109,12 +149,12 @@ h_i(t) = Σ_{j∈N(i)} attn(s_i(t), s_j(t), e_ij, Φ(t-t_j))
 
 ---
 
-### 4. Graph Contrastive Learning (GraphCL / GCA)
+### 4. Graph Contrastive Learning (GraphCL / GCA) - 2020-2022
 
-**核心文献**:
-- You, Y., Chen, T., Sui, Y., Chen, T., Wang, Z., & Shen, Y. (2020). **"Graph Contrastive Learning with Augmentations."** *NeurIPS 2020* (CCF A).
-- Zhu, Y., Xu, Y., Yu, F., Liu, Q., Wu, S., & Wang, L. (2021). **"Graph Contrastive Learning with Adaptive Augmentation."** *WWW 2021* (CCF A).
-- Xia, J., Wu, L., Chen, J., Hu, B., & Li, S.Z. (2022). **"SimGRACE: A Simple Framework for Graph Contrastive Learning without Data Augmentation."** *WWW 2022* (CCF A).
+**历史文献**:
+- You, Y., et al. (2020). **"Graph Contrastive Learning with Augmentations."** *NeurIPS 2020* (CCF A).
+- Zhu, Y., et al. (2021). **"Graph Contrastive Learning with Adaptive Augmentation."** *WWW 2021* (CCF A).
+- Xia, J., et al. (2022). **"SimGRACE: A Simple Framework for Graph Contrastive Learning without Data Augmentation."** *WWW 2022* (CCF A).
 
 **方法概述**:
 - 基于对比学习的图表示学习方法
@@ -138,12 +178,12 @@ L = -log(exp(sim(z_i, z_i') / τ) / Σ_{k=1}^{2N} 1_{k≠i} exp(sim(z_i, z_k) / 
 
 ---
 
-### 5. Relational Graph Convolutional Network (R-GCN)
+### 5. Relational Graph Convolutional Network (R-GCN) - 2018-2022
 
-**核心文献**:
-- Schlichtkrull, M., Kipf, T.N., Bloem, P., Van Den Berg, R., Titov, I., & Welling, M. (2018). **"Modeling Relational Data with Graph Convolutional Networks."** *ESWC 2018* (CCF B).
-- Vashishth, S., Sanyal, S., Niber, V., & Talukdar, P. (2020). **"Composition-based Multi-Relational Graph Convolutional Networks."** *ICLR 2020* (CCF A).
-- Yu, D., Yang, S., Agarwal, D., & Roggel, V. (2022). **"Graph-based Event Information Extraction with Dual-level Relational Graph Attention."** *NAACL 2022* (CCF B).
+**历史文献**:
+- Schlichtkrull, M., et al. (2018). **"Modeling Relational Data with Graph Convolutional Networks."** *ESWC 2018* (CCF B).
+- Vashishth, S., et al. (2020). **"Composition-based Multi-Relational Graph Convolutional Networks."** *ICLR 2020* (CCF A).
+- Yu, D., et al. (2022). **"Graph-based Event Information Extraction with Dual-level Relational Graph Attention."** *NAACL 2022* (CCF B).
 
 **方法概述**:
 - 处理多关系图的图卷积网络
@@ -167,12 +207,12 @@ h_i^(l+1) = σ(Σ_{r∈R} Σ_{j∈N_i^r} (1/c_{i,r}) W_r^(l) h_j^(l) + W_0^(l) h
 
 ---
 
-### 6. Hyperbolic Graph Convolutional Network (HGCN)
+### 6. Hyperbolic Graph Convolutional Network (HGCN) - 2019-2021
 
-**核心文献**:
-- Chami, I., Ying, Z., Ré, C., & Leskovec, J. (2019). **"Hyperbolic Graph Convolutional Neural Networks."** *NeurIPS 2019* (CCF A).
-- Liu, Q., Nickel, M., & Kiela, D. (2019). **"Hyperbolic Graph Neural Networks."** *NeurIPS 2019* (CCF A).
-- Zhang, Y., Wang, X., Shi, C., Liu, N., & Song, G. (2021). **"Lorentzian Graph Convolutional Networks."** *WWW 2021* (CCF A).
+**历史文献**:
+- Chami, I., et al. (2019). **"Hyperbolic Graph Convolutional Neural Networks."** *NeurIPS 2019* (CCF A).
+- Liu, Q., et al. (2019). **"Hyperbolic Graph Neural Networks."** *NeurIPS 2019* (CCF A).
+- Zhang, Y., et al. (2021). **"Lorentzian Graph Convolutional Networks."** *WWW 2021* (CCF A).
 
 **方法概述**:
 - 在双曲空间（Poincaré Ball / Lorentz模型）中进行图嵌入
@@ -196,12 +236,12 @@ h_i^H = exp_o^κ(W ⊗_κ log_o^κ(AGG({h_j^H: j ∈ N(i)})))
 
 ---
 
-### 7. Knowledge Graph Enhanced Methods (KG-Enhanced)
+### 7. Knowledge Graph Enhanced Methods (KG-Enhanced) - 2019-2021
 
-**核心文献**:
-- Zhang, Z., Han, X., Liu, Z., Jiang, X., Sun, M., & Liu, Q. (2019). **"ERNIE: Enhanced Language Representation with Informative Entities."** *ACL 2019* (CCF A).
-- Wang, X., Gao, T., Zhu, Z., Zhang, Z., Liu, Z., Li, J., & Tang, J. (2021). **"KEPLER: A Unified Model for Knowledge Embedding and Pre-trained Language Representation."** *TACL 2021* (CCF B, SCI 1区).
-- Hwang, J.D., Bhagavatula, C., Le Bras, R., Da, J., Sakaguchi, K., Bosselut, A., & Choi, Y. (2021). **"COMET-ATOMIC 2020: On Symbolic and Neural Commonsense Knowledge Graphs."** *AAAI 2021* (CCF A).
+**历史文献**:
+- Zhang, Z., et al. (2019). **"ERNIE: Enhanced Language Representation with Informative Entities."** *ACL 2019* (CCF A).
+- Wang, X., et al. (2021). **"KEPLER: A Unified Model for Knowledge Embedding and Pre-trained Language Representation."** *TACL 2021* (CCF B, SCI 1区).
+- Hwang, J.D., et al. (2021). **"COMET-ATOMIC 2020: On Symbolic and Neural Commonsense Knowledge Graphs."** *AAAI 2021* (CCF A).
 
 **方法概述**:
 - 融合外部知识图谱的图嵌入方法
@@ -226,12 +266,12 @@ h_i^{KG} = Σ_{e∈KG(i)} α_e · embed(e)
 
 ---
 
-### 8. Efficient Graph Transformers (BigBird / Longformer for Graphs)
+### 8. Efficient Graph Transformers (BigBird / Longformer for Graphs) - 2020-2022
 
-**核心文献**:
-- Zaheer, M., Guruganesh, G., Dubey, K.A., Ainslie, J., Alberti, C., Ontanon, S., Pham, P., Ravula, A., Wang, Q., Yang, L., & Ahmed, A. (2020). **"Big Bird: Transformers for Longer Sequences."** *NeurIPS 2020* (CCF A).
-- Beltagy, I., Peters, M.E., & Cohan, A. (2020). **"Longformer: The Long-Document Transformer."** *EMNLP 2020* (CCF B).
-- Wu, Q., Zhao, W., Li, Z., Wipf, D.P., & Yan, J. (2022). **"NodeFormer: A Scalable Graph Structure Learning Transformer for Node Classification."** *NeurIPS 2022* (CCF A).
+**历史文献**:
+- Zaheer, M., et al. (2020). **"Big Bird: Transformers for Longer Sequences."** *NeurIPS 2020* (CCF A).
+- Beltagy, I., et al. (2020). **"Longformer: The Long-Document Transformer."** *EMNLP 2020* (CCF B).
+- Wu, Q., et al. (2022). **"NodeFormer: A Scalable Graph Structure Learning Transformer for Node Classification."** *NeurIPS 2022* (CCF A).
 
 **方法概述**:
 - 稀疏注意力机制降低计算复杂度
@@ -255,7 +295,9 @@ Attention_sparse = Window_Attn(Q, K, V) + Global_Attn(Q, K_g, V_g) + Random_Attn
 
 ---
 
-## 方法对比总结
+## 历史方法对比总结（2018-2022年，仅供参考）
+
+> ⚠️ **注意**: 以下是2018-2022年的历史方法，用户需自行检索2024-2025年及更新的论文。
 
 | 方法 | 代表性论文 | 发表年份 | 会议/期刊 | 主要优势 | 适用场景 |
 |------|------------|----------|-----------|----------|----------|
@@ -270,9 +312,9 @@ Attention_sparse = Window_Attn(Q, K, V) + Global_Attn(Q, K_g, V_g) + Random_Attn
 
 ---
 
-## 推荐组合方案
+## 历史参考组合方案（基于2018-2022年方法）
 
-基于现有事件关系抽取论文的技术路线，建议以下组合方案：
+> ⚠️ **注意**: 以下组合方案基于历史方法，用户应检索2025-2026年的最新方法进行更新。
 
 ### 方案一：文档级事件时序关系
 ```
@@ -357,4 +399,5 @@ BigBird/Longformer (效率) + GraphCL (鲁棒性) + R-GCN (表达能力)
 *文档创建日期: 2026年1月28日*
 *更新日期: 2026年1月28日*
 *用于: 事件关系抽取构图阶段的嵌入方法研究*
-*说明: 本文档所有引用的论文均为真实文献，来自CCF A/B类会议或SCI 1区期刊*
+
+> ⚠️ **重要提醒**: 本文档中的参考方法来自2018-2022年，**不是**用户要求的2025-2026年最新方法。由于技术限制无法访问学术数据库，建议用户通过arXiv、Google Scholar、OpenReview、ACL Anthology等渠道自行检索2025-2026年的最新CCF A/B、SCI 1区论文。
